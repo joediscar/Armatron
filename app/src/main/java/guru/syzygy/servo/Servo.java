@@ -101,8 +101,6 @@ public class Servo {
      */
     public int angleToPW(double internalAngle) {
 
-        if (internalAngle >= 360d) internalAngle = internalAngle - 360d;
-
         double proposedAngle = internalAngle;
 
         double proportion = (proposedAngle - angle_min) / (angle_max - angle_min);

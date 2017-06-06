@@ -71,14 +71,19 @@ public class ArmModel {
             x = lastpoint.x;
             y = lastpoint.y;
 
-            chain.addConsecutiveConstrainedBone(Util.calcUV(startAngle), (float) length, (float) Math.abs(constraintAngleCW), (float) Math.abs(constraintAngleCCW));
+            Vec2f uv = Util.calcUV(startAngle);
+            System.out.println("::: addConsecutiveConstrainedBone(new Vec2f("+uv.toString()+"), "+length+", "+Math.abs(constraintAngleCW)+", "+Math.abs(constraintAngleCCW));
+            chain.addConsecutiveConstrainedBone(uv, (float) length, (float) Math.abs(constraintAngleCW), (float) Math.abs(constraintAngleCCW));
         }  else {
             // This is the base bone
             float endX = (float) Util.round((Math.cos(Util.degToR(startAngle))*length),1);
             float endY = (float) Util.round(Math.sin(Util.degToR(startAngle))*length, 1);
 
+
             // Add the basebone to the chain
+            System.out.println("::: new FabrikeBone2D(new Vec2f(0,0), new Vec2f("+endX+","+endY+")");
             FabrikBone2D basebone = new FabrikBone2D(new Vec2f(0f,0f), new Vec2f((float) endX, (float) endY));
+            // FabrikBone2D basebone = new FabrikBone2D(new Vec2f(0,(float) -length), new Vec2f(0, 0));
             basebone.setClockwiseConstraintDegs( (float) Math.abs(constraintAngleCW));
             basebone.setAnticlockwiseConstraintDegs((float) Math.abs(constraintAngleCCW));
             chain.addBone(basebone);
@@ -86,7 +91,7 @@ public class ArmModel {
             // Configure the chain
             chain.setFixedBaseMode(true);
             chain.setBaseboneConstraintType(FabrikChain2D.BaseboneConstraintType2D.GLOBAL_ABSOLUTE);
-            chain.setBaseboneConstraintUV( new Vec2f(1.0f, 0.0f));
+            chain.setBaseboneConstraintUV( new Vec2f(0.0f, 1.0f));
             chain.setEmbeddedTargetMode(false);
         }
 
@@ -173,6 +178,7 @@ public class ArmModel {
  * LocalBone is a convenience class that wraps fabrik bones and provides a way to
  * maintain state, name the bone, and do some rudimentary calculations.
  */
+@SuppressWarnings("All")
 class LocalBone {
     String boneName;
 

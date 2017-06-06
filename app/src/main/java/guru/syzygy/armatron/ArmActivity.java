@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -53,9 +54,13 @@ import static guru.syzygy.armatron.ArmActivity.EFFECT.WRISTUP;
 @SuppressWarnings("All")
 public class ArmActivity extends IOIOActivity {
 
+    static final int MS_TO_MOVE = 500;  // Number of milliseconds to complete a move
+
     Looper looper;  // Variable to hold the looper object of the IOIO class
 
     Queue<String> queue = new LinkedBlockingQueue<String>();  // Queue up strings to send to the SSC-32 board
+
+    ArrayList<String> record = new ArrayList<String>();  // Recording of all STEPS taken
 
     Servo[] servos; // An array to hold servo objects
 
@@ -64,6 +69,13 @@ public class ArmActivity extends IOIOActivity {
     SeekBar touchSeekBar;        // The touch bar for controlling the wrist rotation
     LinearLayout chain_panel;    // The area where we can display the angles of the arm
     TextView bar_angle;          // To show current settings of the touch seek bar
+
+    ImageButton button_add;
+    ImageButton button_play;
+    ImageButton button_delete;
+    ImageButton button_wipe;
+    ImageButton button_zero;
+    TextView recorded_steps;
 
     // This hashtable holds the linear layouts for the records in the chain_panel
     Hashtable<String, LinearLayout> boneViews = new Hashtable<String, LinearLayout>();
@@ -95,8 +107,8 @@ public class ArmActivity extends IOIOActivity {
         // Name, channel on SSC-32 board, minimum pulsewidth value, maximum pulsewidth value, minimum angle range, maximum angle range, starting angle
         servos[0] = new Servo("base",    0, 553, 2520, 0, 180, 90d);  //  Rotating Base  constraints are normally -98 to 99
 
-        servos[1] = new Servo("bottom",  1, 553, 2520, 0, 180, 90d);  //  Bottom Servo  HS805BB
-        servos[2] = new Servo("middle",  2, 553, 2520, 360, 180, 0d);  //  Mid-Servo      HS755HB
+        servos[1] = new Servo("bottom",  1, 553, 2520, 0, 180, 100d);  //  Bottom Servo  HS805BB
+        servos[2] = new Servo("middle",  2, 553, 2520, 360, 180, 360d);  //  Mid-Servo      HS755HB
         servos[3] = new Servo("wrist",   3, 553, 2520, 0, 180, 0d);  //  Top Servo    HS645MG
 
         servos[4] = new Servo("gripper", 4, 553, 2520, 0, 180, 0d);  //  Rotator
@@ -104,6 +116,7 @@ public class ArmActivity extends IOIOActivity {
 
 
         // Make sure all the non-arm related servos are at the correct angles.
+        servos[0].moveToAngle(90);
         servos[3].moveToAngle(90);
         servos[4].moveToAngle(90);
         servos[5].moveToAngle(90);
@@ -116,10 +129,37 @@ public class ArmActivity extends IOIOActivity {
         arm  = new ArmModel();
 
         // Create the arm  parameters are name, length (in inches), starting angle, clockwise constraint and counterclockwise restraint.
-        addBone(servos[1].getName(), 6.0, 90, 10, 135);   // Bottom Servo can go to 30 degrees
-        addBone(servos[2].getName(), 8.0, 0,  170, 0);    // Middle
+        addBone(servos[1].getName(), 6.0, 100, 90, 90);    // Bottom Servo can go to 30 degrees
+        addBone(servos[2].getName(), 8.0, 0,  135, 0);    // Middle
 
     }
+
+    private void wipeRecord() {
+        record.clear();
+        addRecord();
+    }
+
+    private void addRecord() {
+        record.add(getServoCommands());
+        recorded_steps.setText(""+record.size()+" steps in queue");
+    }
+
+    private void deleteRecord() {
+        if (record.size() < 1) return;
+        record.remove(record.size()-1);
+    }
+
+    private void playRecord() {
+        for (String command: record) {
+            enqueue(command);
+            try {
+                Thread.sleep(1500);
+            } catch (Exception ex) {
+
+            }
+        }
+    }
+
 
 
     /**
@@ -156,6 +196,31 @@ public class ArmActivity extends IOIOActivity {
         chain_panel = (LinearLayout) findViewById(R.id.chain_panel);
         bar_angle = (TextView) findViewById(R.id.bar_angle);
 
+        // Buttons
+        button_add = (ImageButton) findViewById(R.id.button_add);
+        button_delete = (ImageButton) findViewById(R.id.button_delete);
+        button_play = (ImageButton) findViewById(R.id.button_play);
+        button_wipe = (ImageButton) findViewById(R.id.button_wipe);
+
+
+        View.OnClickListener ocl = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (view == button_add) addRecord();
+                if (view == button_delete) deleteRecord();
+                if (view == button_play) playRecord();
+                if (view == button_wipe) wipeRecord();
+            }
+        };
+
+        button_add.setOnClickListener(ocl);
+        button_delete.setOnClickListener(ocl);
+        button_play.setOnClickListener(ocl);
+        button_wipe.setOnClickListener(ocl);
+
+        recorded_steps = (TextView) findViewById(R.id.recorded_steps);
+
+
         // If you touch the chainpanel, you get a toast that tells you what the values mean
         chain_panel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -174,6 +239,7 @@ public class ArmActivity extends IOIOActivity {
         // Create the panel
         createChainPanel();
 
+        wipeRecord();
 
     }
 
@@ -478,27 +544,27 @@ public class ArmActivity extends IOIOActivity {
         if (sdy2 != 0) nz++;
 
         // Must have two changes in order to be valid, and must have at least 3 events doing the same thing
-        if (nz < 2 || sampleCount < 3) {
+        if (nz < 2 || sampleCount < 2) {
 
         } else {
             // So now we know we're doing an event, we determine what the gesture means
 
-            if (sdy1 == -1 && sdy2 == -1 && sdx1 == 0 && sdx2 == 0) { // Wrist Up
+            if (sdy1 == -1 && sdy2 == -1 && (sdx1 == 0 || sdx2 == 0)) { // Wrist Up
                 // Two fingers sliding up moves the wrist up
                 effect = WRISTUP;
-            } else if (sdy1 == 1 && sdy2 == 1 && sdx1 ==0 && sdx2 == 0) { // Wrist Down
+            } else if (sdy1 == 1 && sdy2 == 1 && (sdx1 == 0 || sdx2 == 0 )) { // Wrist Down
                 // Two fingers sliding down moves the wrist down
                 effect = WRISTDOWN;
-            } else if (sdx1 < 0 && sdx2 < 0 && sdy1 == 0 && sdy2 == 0) { // Base left
+            } else if (sdx1 < 0 && sdx2 < 0 && (sdy1 == 0 || sdy2 == 0)) { // Base left
                 // Two fingers going left moves the base to the left
                 effect = BASELEFT;
-            } else if (sdx1 > 0 && sdx2 > 0 && sdy1 == 0 && sdy2 == 0) { // Bas right
+            } else if (sdx1 > 0 && sdx2 > 0 && (sdy1 == 0 || sdy2 == 0)) { // Bas right
                 // Two fingers moving right moves the base to the right
                 effect = BASERIGHT;
-            } else if (sdx1 >= 0 && sdx2 == -1) { // Gripper close
+            } else if (sdx1 >= 0 && sdx2 < 0) { // Gripper close
                 // Pinching closes the gripper
                 effect = GRIPPERCLOSE;
-            } else if (sdx1 <= -1 && sdx2 == 1 ) { // Gripper Open
+            } else if (sdx1 <= 0 && sdx2 > 0 ) { // Gripper Open
                 // Spreading opens the gripper
                 effect = GRIPPEROPEN;
             }
@@ -553,15 +619,15 @@ public class ArmActivity extends IOIOActivity {
             } break;
 
             case GRIPPEROPEN: {
-                gripper.setCurrentValue(gripper.getCurrentValue() - 300);
+                gripper.setCurrentValue(gripper.getCurrentValue() - 800);
             } break;
 
             case ROTATECW: {
-                rotator.setCurrentValue(rotator.getCurrentValue() + 500);
+                rotator.setCurrentValue(rotator.getCurrentValue() + 250);
             } break;
 
             case ROTATECCW: {
-                rotator.setCurrentValue(rotator.getCurrentValue() - 500);
+                rotator.setCurrentValue(rotator.getCurrentValue() - 250);
             } break;
 
             case BASELEFT: {
@@ -658,14 +724,10 @@ public class ArmActivity extends IOIOActivity {
         Canvas canvas = new Canvas(bitmap);
 
 
-        // PLOT the effector point in yellow
-        Vec2f effector = arm.getChain().getEffectorLocation();
-        circlePlotArmCoords(canvas, effector, 15f, Color.YELLOW);
-
         // Draw the bones in RED (vs. Blue to indicate that vector draw is being used instead)
         Paint paint = new Paint();
-        paint.setColor(Color.RED);
-        paint.setStrokeWidth(10f);
+        paint.setColor(Color.BLACK);
+        paint.setStrokeWidth(30f);
 
         ArrayList<LocalBone> bones = arm.getBones();
 
@@ -750,7 +812,7 @@ public class ArmActivity extends IOIOActivity {
 
         if (imageView == null) return null;
 
-        float chainLength = arm.getTotalLength() + 2;
+        float chainLength = arm.getTotalLength();
 
         // Arm coords go from -chainLength to +chainLength.  Convert to zero - chainLength*2
         armX += chainLength;
@@ -785,7 +847,7 @@ public class ArmActivity extends IOIOActivity {
     }
 
     /**
-     * Move servos into the position as represented in the arm object TODO
+     * Move servos into the position as represented in the arm object
      *
      */
     public String armToServos() {
@@ -822,7 +884,7 @@ public class ArmActivity extends IOIOActivity {
         for (Servo s: servos) {
             command = command + (command.equals("")?"":" ") + s.getSSCCommand();
         }
-        command = command + " T1000";
+        command = command + " T"+MS_TO_MOVE;
         return command;
     }
 

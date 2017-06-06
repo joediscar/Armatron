@@ -96,9 +96,9 @@ public class Util {
      * @return
      */
     public static Vec2f calcUV(double angle) {
-        // return Vec2f.getDirectionUV( new Vec2f(0f, 0f), new Vec2f((float) Math.cos(degToR(angle)), (float) Math.sin(degToR(angle))));
-        Vec2f v = new Vec2f((float) Util.round(Math.cos(degToR(angle)),1), (float) Util.round(Math.sin(degToR(angle)),1));
-        return v;
+        return Vec2f.getDirectionUV( new Vec2f(0f, 0f), new Vec2f((float) Math.cos(degToR(angle)), (float) Math.sin(degToR(angle))));
+        // Vec2f v = new Vec2f((float) Util.round(Math.cos(degToR(angle)),1), (float) Util.round(Math.sin(degToR(angle)),1));
+        // return v;
     }
 
     /**

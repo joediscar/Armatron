@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/servo_angle"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/record_panel"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="28dp" />
 
@@ -43,9 +43,59 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/bar_angle"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/record_panel"
         android:layout_centerHorizontal="true"
         android:text="45 Degrees"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/record_panel"
+        android:gravity="center_horizontal"
+        android:paddingBottom="20dp"
+        >
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_input_add"
+            android:id="@+id/button_add"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_play"
+            android:id="@+id/button_play"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_delete"
+            android:id="@+id/button_delete"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:id="@+id/button_wipe"
+            />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="135 Steps"
+        android:id="@+id/recorded_steps"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         />
 
 </RelativeLayout>

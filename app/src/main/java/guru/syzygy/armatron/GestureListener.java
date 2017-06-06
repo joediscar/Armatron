@@ -51,7 +51,7 @@ public class GestureListener implements View.OnTouchListener {
         lastTouchY = touchY;
 
         // The length of the arm determines how "wide" our depiction of the arm will be
-        float chainlength = activity.arm.getTotalLength();
+        float armMap = activity.arm.getTotalLength() * 2f;
 
         // Screen is UL (0,0) to LR(screenWidth, screenHeight) but arm is UL(-chainlength,chainlength) to LR(chainlength, -chainlength)
         // So convert
@@ -59,8 +59,8 @@ public class GestureListener implements View.OnTouchListener {
         float propoY = touchY/screenHeight;
 
         // Calculate the screen coordinates into real-world measurements
-        float armX = chainlength*2 * propoX - chainlength;
-        float armY = chainlength - chainlength*2 * propoY;
+        final float armX = armMap * propoX - (armMap/2f);
+        final float armY = (armMap/2f) - armMap * propoY;
 
         //
         System.out.println("-----> TOUCH ("+touchX+","+touchY+")  in screen "+screenWidth+"x"+screenHeight+" Move Arm to: ("+(int) armX+", "+(int) armY+")");
@@ -81,6 +81,10 @@ public class GestureListener implements View.OnTouchListener {
                 // For debugging purposes, it is convenient to see where our touch really was
                 Vec2f touchVec = new Vec2f(touchX, touchY);
                 activity.circlePlotScreenCoords(canvas, touchVec, 10f, Color.GREEN); // Touch location
+
+                // To plot where we think we're asking
+                Vec2f v = new Vec2f(armX, armY);
+                activity.circlePlotArmCoords(canvas, v, 20f, Color.YELLOW);
 
                 // And to display where the effector actually ended up at
                 Vec2f effector = activity.arm.getChain().getEffectorLocation();
