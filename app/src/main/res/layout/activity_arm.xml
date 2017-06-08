@@ -23,7 +23,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/servo_angle"
+        android:layout_above="@+id/tmp_01"
         android:orientation="vertical"
         android:id="@+id/chain_panel"
         android:weightSum="1"
@@ -31,13 +31,32 @@
 
     </LinearLayout>
 
-    <SeekBar
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/servo_angle"
+        android:layout_marginBottom="28dp"
         android:layout_above="@+id/record_panel"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="28dp" />
+        android:orientation="horizontal"
+        android:id="@+id/tmp_01"
+        >
+
+        <SeekBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/servo_angle"
+            android:layout_centerHorizontal="true"
+            android:layout_weight=".9"
+        />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_zero"
+            android:src="@android:drawable/dialog_frame"
+            android:layout_weight=".1"
+            />
+    </LinearLayout>
+
 
     <TextView
         android:layout_width="wrap_content"
@@ -86,7 +105,22 @@
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:id="@+id/button_wipe"
             />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_save"
+            android:id="@+id/button_save"
+            />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_compass"
+            android:id="@+id/button_load"
+            />
     </LinearLayout>
+
 
     <TextView
         android:layout_width="match_parent"

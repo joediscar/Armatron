@@ -120,7 +120,7 @@ public class Utils
 	 */
 	public static FloatBuffer createFloatBuffer(int numFloats)
 	{	
-		return ByteBuffer.allocateDirect(numFloats * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
+		return ByteBuffer.allocateDirect(numFloats * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
 	}
 	
 	/**

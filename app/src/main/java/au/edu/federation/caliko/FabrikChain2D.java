@@ -13,6 +13,7 @@ import au.edu.federation.utils.Vec2f;
  * @author Al Lansley
  * @version 1.1 - 02/08/2016
  */
+@SuppressWarnings("All")
 public class FabrikChain2D
 {	
 	/**
@@ -817,7 +818,7 @@ public class FabrikChain2D
 				// Note: On the forward pass we constrain to the limits imposed by the first joint of the outer bone.
 				float clockwiseConstraintDegs     = mChain.get(loop+1).getJoint().getClockwiseConstraintDegs();
 				float antiClockwiseConstraintDegs = mChain.get(loop+1).getJoint().getAnticlockwiseConstraintDegs();
-				Vec2f constrainedUV = Vec2f.getConstrainedUV(thisBoneOuterToInnerUV, outerBoneOuterToInnerUV, clockwiseConstraintDegs, antiClockwiseConstraintDegs);				
+				Vec2f constrainedUV = Vec2f.getConstrainedUV(thisBoneOuterToInnerUV, outerBoneOuterToInnerUV, clockwiseConstraintDegs, antiClockwiseConstraintDegs);
 
 				// At this stage we have a outer-to-inner unit vector for this bone which is within our constraints,
 				// so we can set the new inner joint location to be the end joint location of this bone plus the
@@ -874,7 +875,7 @@ public class FabrikChain2D
 				// Note: On the backward pass we constrain to the limits imposed by the first joint of this bone.
 				float clockwiseConstraintDegs     = mChain.get(loop).getJoint().getClockwiseConstraintDegs();
 				float antiClockwiseConstraintDegs = mChain.get(loop).getJoint().getAnticlockwiseConstraintDegs();
-				Vec2f constrainedUV = Vec2f.getConstrainedUV(thisBoneInnerToOuterUV, prevBoneInnerToOuterUV, clockwiseConstraintDegs, antiClockwiseConstraintDegs);				
+				Vec2f constrainedUV = Vec2f.getConstrainedUV(thisBoneInnerToOuterUV, prevBoneInnerToOuterUV, clockwiseConstraintDegs, antiClockwiseConstraintDegs);
 
 				// At this stage we have an inner-to-outer unit vector for this bone which is within our constraints,
 				// so we can set the new end location to be the start location of this bone plus the constrained

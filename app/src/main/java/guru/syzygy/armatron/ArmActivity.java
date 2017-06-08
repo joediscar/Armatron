@@ -1,5 +1,6 @@
 package guru.syzygy.armatron;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -12,7 +13,10 @@ import android.support.v4.view.MotionEventCompat;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -70,10 +74,15 @@ public class ArmActivity extends IOIOActivity {
     LinearLayout chain_panel;    // The area where we can display the angles of the arm
     TextView bar_angle;          // To show current settings of the touch seek bar
 
+    int scrollServoIndex = 0;
+
     ImageButton button_add;
     ImageButton button_play;
     ImageButton button_delete;
     ImageButton button_wipe;
+    ImageButton button_save;
+    ImageButton button_load;
+
     ImageButton button_zero;
     TextView recorded_steps;
 
@@ -134,6 +143,20 @@ public class ArmActivity extends IOIOActivity {
 
     }
 
+    /**
+     * Put the arm back into the starting position and clear the queue
+     */
+    private void zero() {
+        initializeServos();
+        createArm();
+        queue.clear();
+        if (scrollServoIndex >= 0) {
+            Servo baseServo = servos[scrollServoIndex];
+            System.out.println("##### Base Servo is "+baseServo.getName()+" at "+baseServo.getCurrentValue());
+            updateProgressBar(baseServo);
+        }
+    }
+
     private void wipeRecord() {
         record.clear();
         addRecord();
@@ -141,12 +164,24 @@ public class ArmActivity extends IOIOActivity {
 
     private void addRecord() {
         record.add(getServoCommands());
-        recorded_steps.setText(""+record.size()+" steps in queue");
+        showSteps();
     }
+
 
     private void deleteRecord() {
         if (record.size() < 1) return;
         record.remove(record.size()-1);
+        showSteps();
+    }
+
+    private void showSteps() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                recorded_steps.setText(""+record.size()+" steps in queue");
+            }
+        });
+
     }
 
     private void playRecord() {
@@ -171,6 +206,7 @@ public class ArmActivity extends IOIOActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_arm);
+        Prefs.getInstance(this);
 
         whatIsScreen();
         //
@@ -189,7 +225,6 @@ public class ArmActivity extends IOIOActivity {
         //     Max Travel: 197 degrees
         //     PWM signal range 553-2520 usec
         //
-        initializeServos();
 
         // Find the widgets we use for the UI
         touchSeekBar = (SeekBar) findViewById(R.id.servo_angle);
@@ -201,7 +236,24 @@ public class ArmActivity extends IOIOActivity {
         button_delete = (ImageButton) findViewById(R.id.button_delete);
         button_play = (ImageButton) findViewById(R.id.button_play);
         button_wipe = (ImageButton) findViewById(R.id.button_wipe);
+        button_zero = (ImageButton) findViewById(R.id.button_zero);
+        button_save = (ImageButton) findViewById(R.id.button_save);
+        button_load = (ImageButton) findViewById(R.id.button_load);
 
+
+        button_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                saveMacro();
+            }
+        });
+
+        button_load.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadMacro();
+            }
+        });
 
         View.OnClickListener ocl = new View.OnClickListener() {
             @Override
@@ -212,6 +264,15 @@ public class ArmActivity extends IOIOActivity {
                 if (view == button_wipe) wipeRecord();
             }
         };
+
+        button_zero.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                zero();
+                draw();
+                enqueue(armToServos());
+            }
+        });
 
         button_add.setOnClickListener(ocl);
         button_delete.setOnClickListener(ocl);
@@ -230,8 +291,7 @@ public class ArmActivity extends IOIOActivity {
         });
 
 
-        // Create the arm model
-        createArm();
+        zero();
 
         // What does the slider control?  Here, we tell it we control servo[5] ... the rotator
         setScrollServo(5);  // Scrollbar will control the rotator
@@ -264,14 +324,16 @@ public class ArmActivity extends IOIOActivity {
      * @param servoNum
      */
     public void setScrollServo(int servoNum) {
-        final Servo baseServo = servos[servoNum];
+        scrollServoIndex = servoNum;
+        Servo baseServo = servos[servoNum];
+
         final DecimalFormat df = new DecimalFormat("#.0");
 
         touchSeekBar.setOnSeekBarChangeListener(null);
 
         touchSeekBar.setMax((int) baseServo.getServoMaxValue() - (int) baseServo.getServoMinValue());
-        touchSeekBar.setProgress(baseServo.getCurrentValue() - (int) baseServo.getServoMinValue());
-        bar_angle.setText(df.format(baseServo.getAngle())+" degrees / "+baseServo.getCurrentValue()+" ... "+baseServo.angleToPW(baseServo.getAngle())+" PWM ");
+        updateProgressBar(baseServo);
+
 
         touchSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             int oldProgress;
@@ -292,9 +354,11 @@ public class ArmActivity extends IOIOActivity {
                 if (oldProgress != seekBar.getProgress()) {
                     // There was a value change... we have to queue up the command
 
+                    Servo baseServo = servos[scrollServoIndex];
                     int p = seekBar.getProgress() + (int) baseServo.getServoMinValue();
                     baseServo.setCurrentValue(p);
-                    bar_angle.setText(df.format(baseServo.getAngle())+" degrees / "+baseServo.getCurrentValue()+" ... "+baseServo.angleToPW(baseServo.getAngle())+" PWM ");
+                    // bar_angle.setText(df.format(baseServo.getAngle())+" degrees / "+baseServo.getCurrentValue()+" ... "+baseServo.angleToPW(baseServo.getAngle())+" PWM ");
+                    updateProgressBar(baseServo);
 
                     enqueue(baseServo.getSSCCommand()+" T500");
                     oldProgress = seekBar.getProgress();
@@ -307,6 +371,17 @@ public class ArmActivity extends IOIOActivity {
 
     }
 
+    public void updateProgressBar(final Servo servo) {
+        final DecimalFormat df = new DecimalFormat("#.0");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                touchSeekBar.setProgress(servo.getCurrentValue() - (int) servo.getServoMinValue());
+                bar_angle.setText(servo.getName()+" "+df.format(servo.getAngle())+" degrees / "+servo.getCurrentValue()+" ... "+servo.angleToPW(servo.getAngle())+" PWM ");
+            }
+        });
+
+    }
 
     /**
      * Convenience function to redraw the arm inside a UI thread
@@ -343,6 +418,7 @@ public class ArmActivity extends IOIOActivity {
         for (LocalBone b: arm.getBones()) {
             LinearLayout aChainView = boneViews.get(b.getName());
             Servo servo = findServo(b.getName());
+            if (servo == null) continue;
             TextView textName = (TextView) aChainView.findViewById(R.id.boneName);
             TextView boneAngle = (TextView) aChainView.findViewById(R.id.bone_angle);
             TextView servoAngle = (TextView) aChainView.findViewById(R.id.servo_external_angle);
@@ -435,6 +511,7 @@ public class ArmActivity extends IOIOActivity {
 
 
     }
+
 
     //  The following are variables used exclusively for gripper control.
     Vec2f lastV1 = null;        // The last position for touch #1
@@ -860,6 +937,7 @@ public class ArmActivity extends IOIOActivity {
 
             float angle = bone.getAngleDeg(); // Angle
             Servo servo = findServo(bone.getName());
+            if (servo == null) continue;
             double servoAngle = angle - lastAngle;
 
             // Normalize the angle
@@ -938,8 +1016,101 @@ public class ArmActivity extends IOIOActivity {
         return new Vec2f((float) x,(float) y);
     }
 
-    /////////////////////////////////////
-    ///////////////////////////////////////
+
+    /**
+     * Save the current macro (record).  This method will
+     * display the appropriate dialog and handle the inputs
+     */
+    private void saveMacro() {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_save);
+        dialog.setTitle("Save Current Script");
+
+        // The widgets in the dialog
+        final EditText dialog_save_file = (EditText) dialog.findViewById(R.id.dialog_save_file);
+        final Button dialog_button_save = (Button) dialog.findViewById(R.id.dialog_button_save);
+        final ImageButton dialog_button_cancel = (ImageButton) dialog.findViewById(R.id.dialog_button_cancel);
+
+        // If cancel is hit, cancel.
+        dialog_button_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.cancel();
+            }
+        });
+
+
+        // Handle save button.  Ignore the save if the filename wasn't input
+        dialog_button_save.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String filename = dialog_save_file.getText().toString().trim();
+                if ( filename.equals("")) return;
+
+                // We save the macro to the app preferences
+                Prefs.saveMacro(filename, record);
+
+                // And close the dialog
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    /**
+     * Display a dialog to the user with all the macros that have been saved
+     * to AppPreferences.  Allow him to select one, and load it into the
+     * records variable.
+     *
+     */
+    private void loadMacro() {
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_load);
+
+        // Buttons in our dialog
+        final LinearLayout dialog_load_macros = (LinearLayout) dialog.findViewById(R.id.dialog_load_macros);
+        final Button dialog_load_button_cancel = (Button) dialog.findViewById(R.id.dialog_load_button_cancel);
+
+        // On hitting cancel, cancel the dialog
+        dialog_load_button_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                dialog.cancel();
+            }
+        });
+
+        // Get macros from preferences
+        ArrayList<String> macroNames = Prefs.getMacroNames();
+
+        // Put a button for each macro
+        for (final String macro: macroNames) {
+            Button b = new Button(this);
+            b.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            b.setText(macro);
+
+            // If this button is clicked, set the record global
+            // variable to the macro, and refresh the macro display,
+            // and close the dialog.
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    record = Prefs.getMacro(macro);
+                    showSteps();
+                    dialog.dismiss();
+                }
+            });
+            dialog_load_macros.addView(b);
+        }
+
+        dialog.show();
+
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     class Looper extends BaseIOIOLooper {
 

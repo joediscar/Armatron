@@ -267,7 +267,21 @@ public class Vec2f
 			return -unsignedAngleDegs;
 		}
 	}
-	
+
+	/**
+	 * Convenience function so that methods that were calling the original getConstrainedUV() will not break.
+	 *
+	 * @see   #getConstrainedUV(Vec2f, Vec2f, float, float, boolean) 
+	 * @param directionUV
+	 * @param baselineUV
+	 * @param clockwiseConstraintDegs
+	 * @param antiClockwiseConstraintDegs
+     * @return
+     */
+	public static Vec2f getConstrainedUV(Vec2f directionUV, Vec2f baselineUV, float clockwiseConstraintDegs, float antiClockwiseConstraintDegs) {
+		return getConstrainedUV(directionUV, baselineUV, clockwiseConstraintDegs, antiClockwiseConstraintDegs, false);
+	}
+
 	/**
 	 * Constrain a direction unit vector to be within the clockwise and anti-clockwise rotational constraints of a baseline unit vector.
 	 * <p>
@@ -284,7 +298,7 @@ public class Vec2f
 	 * @param	antiClockwiseConstraintDegs	The maximum anti-clockwise rotation that may be applied to the direction unit vector
 	 * @return	Vec2f
 	 */
-	public static Vec2f getConstrainedUV(Vec2f directionUV, Vec2f baselineUV, float clockwiseConstraintDegs, float antiClockwiseConstraintDegs)
+	public static Vec2f getConstrainedUV(Vec2f directionUV, Vec2f baselineUV, float clockwiseConstraintDegs, float antiClockwiseConstraintDegs, boolean test)
 	{
 		// Get the signed angle from the baseline UV to the direction UV.
 		// Note: In our signed angle ranges:
@@ -297,6 +311,7 @@ public class Vec2f
 		{			
 			// ...then our constrained unit vector is the baseline rotated by the anti-clockwise constraint angle.
 			// Note: We could do this by calculating a correction angle to apply to the directionUV, but it's simpler to work from the baseline.
+			if (test) return null;
 			return Vec2f.rotateDegs(baselineUV, antiClockwiseConstraintDegs);
 		}
 		
@@ -305,6 +320,7 @@ public class Vec2f
 		{	
 			// ...then our constrained unit vector is the baseline rotated by the clockwise constraint angle.
 			// Note: Again, we could do this by calculating a correction angle to apply to the directionUV, but it's simpler to work from the baseline.
+			if (test) return null;
 			return Vec2f.rotateDegs(baselineUV, -clockwiseConstraintDegs);
 		}
 		

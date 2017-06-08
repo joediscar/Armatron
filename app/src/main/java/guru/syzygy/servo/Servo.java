@@ -64,11 +64,11 @@ public class Servo {
         // if (proposedValue < servo_min_value || proposedValue > servo_max_value) throw new RuntimeException ("Move is out of bounds (real world angle "+realworldAngle+" & internal Angle "+internalAngle+") results in PW = "+proposedValue);
 
 
-        System.out.println("--> Angle "+realworldAngle+" = "+servo_min_value+" < "+proposedValue+" < "+servo_max_value);
+        System.out.println("--> Angle for "+name+" to be set to "+realworldAngle+" = "+servo_min_value+" < "+proposedValue+" < "+servo_max_value);
         if (proposedValue < servo_min_value ) proposedValue = servo_min_value;
         if (proposedValue > servo_max_value) proposedValue = servo_max_value;
 
-        System.out.println("--> Adjusted Angle: "+realworldAngle+" = "+servo_min_value+" < "+proposedValue+" < "+servo_max_value);
+        System.out.println("--> Adjusted "+name+" Angle: "+realworldAngle+" = "+servo_min_value+" < "+proposedValue+" < "+servo_max_value);
 
         currentValue = proposedValue;
         return getSSCCommand();
