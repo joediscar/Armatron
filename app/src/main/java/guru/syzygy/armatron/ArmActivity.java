@@ -801,8 +801,17 @@ public class ArmActivity extends IOIOActivity {
         Canvas canvas = new Canvas(bitmap);
 
 
+
+
         // Draw the bones in RED (vs. Blue to indicate that vector draw is being used instead)
         Paint paint = new Paint();
+        paint.setColor(Color.LTGRAY);
+        paint.setStrokeWidth(5f);
+
+        // First draw the semicircle
+        float armLength = arm.getChain().getChainLength();
+        canvas.drawArc(0f,0f,getSmallerDimension(),getSmallerDimension(),180f,180f,false,paint);
+
         paint.setColor(Color.BLACK);
         paint.setStrokeWidth(30f);
 
@@ -900,12 +909,7 @@ public class ArmActivity extends IOIOActivity {
         // to be similar to screen coords.
         armY = chainLength*2 - armY;
 
-
-        int width = (int) imageView.getWidth();
-        int height = (int) imageView.getHeight();
-
-        float smallerDimension = width;
-        if (height < smallerDimension)   smallerDimension = height;
+        float smallerDimension = getSmallerDimension();
 
         // Create the ratios we will use
         float ratioX = (smallerDimension) / (chainLength*2f);
@@ -916,6 +920,16 @@ public class ArmActivity extends IOIOActivity {
 
         Vec2f retval = new Vec2f(screenX, screenY);
         return retval;
+    }
+
+    public static float getSmallerDimension() {
+        int width = (int) imageView.getWidth();
+        int height = (int) imageView.getHeight();
+
+        float smallerDimension = width;
+        if (height < smallerDimension)   smallerDimension = height;
+        return smallerDimension;
+
     }
 
     protected void enqueue(String command) {
