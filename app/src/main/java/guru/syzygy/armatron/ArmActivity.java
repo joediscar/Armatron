@@ -24,6 +24,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
@@ -187,11 +188,13 @@ public class ArmActivity extends IOIOActivity {
     private void playRecord() {
         for (String command: record) {
             enqueue(command);
+            /*
             try {
                 Thread.sleep(1500);
             } catch (Exception ex) {
 
             }
+            */
         }
     }
 
@@ -1138,10 +1141,14 @@ public class ArmActivity extends IOIOActivity {
         OutputStream out;
         PrintStream printout;
 
+        InputStream in;
+
         private boolean ledState = false;
 
         Uart uart;
         DigitalOutput led_;
+
+        Thread receiver;
 
         @Override
         protected void setup() throws ConnectionLostException {
@@ -1149,11 +1156,37 @@ public class ArmActivity extends IOIOActivity {
             uart = ioio_.openUart(rxPin, txPin, BAUDRATE, PARITY, STOPBITS);
             out = uart.getOutputStream();
             printout = new PrintStream(out);
+
+            in = uart.getInputStream();
+
         }
 
         @Override
         public void disconnected() {
             uart.close();
+        }
+
+        synchronized int waitFor(int... ch) {
+            int c = -1;
+            try {
+                while ((c = in.read()) != -1) {
+                    if (ch == null) return c;
+                    for (int check : ch) {
+                        if (check == c) return c;
+                    }
+                }
+            } catch (Exception ex) {
+
+            }
+            return c;
+        }
+
+        synchronized void waitForEmpty() {
+            int ch = 0;
+            do {
+                sendCommand("Q\n");
+                ch = waitFor('+', '.');
+            } while (ch != '.' && ch != -1);
         }
 
         /**
@@ -1169,6 +1202,7 @@ public class ArmActivity extends IOIOActivity {
                         // Send command to SSC-32
                         System.out.println("***** COMMAND: " + nextCommand);
                         sendCommand(nextCommand);
+                        waitForEmpty();
                         ledState = !ledState;
                         led_.write(ledState);
 
