@@ -23,6 +23,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -84,7 +85,8 @@ public class ArmActivity extends IOIOActivity {
     ImageButton button_save;
     ImageButton button_load;
 
-    ImageButton button_zero;
+    Button button_zero;
+    ToggleButton gripper_toggle;
     TextView recorded_steps;
 
     // This hashtable holds the linear layouts for the records in the chain_panel
@@ -96,6 +98,9 @@ public class ArmActivity extends IOIOActivity {
     // The geometry of the screen
     float screenWidth;
     float screenHeight;
+
+    // Angle the gripper should be locked at.  MAXVALUE if undefined
+    float gripper_lock = Float.MAX_VALUE;
 
     /**
      * Set the screen geometry
@@ -239,9 +244,10 @@ public class ArmActivity extends IOIOActivity {
         button_delete = (ImageButton) findViewById(R.id.button_delete);
         button_play = (ImageButton) findViewById(R.id.button_play);
         button_wipe = (ImageButton) findViewById(R.id.button_wipe);
-        button_zero = (ImageButton) findViewById(R.id.button_zero);
+        button_zero = (Button) findViewById(R.id.button_zero);
         button_save = (ImageButton) findViewById(R.id.button_save);
         button_load = (ImageButton) findViewById(R.id.button_load);
+        gripper_toggle = (ToggleButton) findViewById(R.id.gripper_toggle);
 
 
         button_save.setOnClickListener(new View.OnClickListener() {
@@ -281,6 +287,24 @@ public class ArmActivity extends IOIOActivity {
         button_delete.setOnClickListener(ocl);
         button_play.setOnClickListener(ocl);
         button_wipe.setOnClickListener(ocl);
+
+        gripper_toggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (gripper_toggle.isChecked()) {
+                    // ON TODO
+                    float current_wrist_servo_angle = (float) findServo("wrist").getAngle();
+
+                    // Need the last bone angle in order to calculate what absolute angle should be
+                    float lastboneAngle = (float) arm.getAngleForBone("middle");
+
+                    gripper_lock = lastboneAngle + current_wrist_servo_angle;
+
+                } else {
+                    // OFF
+                }
+            }
+        });
 
         recorded_steps = (TextView) findViewById(R.id.recorded_steps);
 
@@ -776,7 +800,7 @@ public class ArmActivity extends IOIOActivity {
             Vec2f screenEnd = convertArmToScreen(end);
 
             double screenAngle = Math.atan2((double) (screenEnd.y - screenStart.y), (screenEnd.x - screenStart.x));
-            System.out.println(">>> Angle Compare Bone reports: "+bone.getAngleDeg()+" screen says "+screenAngle);
+            // System.out.println(">>> Angle Compare Bone reports: "+bone.getAngleDeg()+" screen says "+screenAngle);
 
             // System.out.println("Draw from: ("+startX+","+startY+") to ("+endX+","+endY+")");
 
@@ -802,8 +826,6 @@ public class ArmActivity extends IOIOActivity {
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-
-
 
 
         // Draw the bones in RED (vs. Blue to indicate that vector draw is being used instead)
@@ -961,6 +983,14 @@ public class ArmActivity extends IOIOActivity {
             servoAngle = Util.normalize(servoAngle);
             servo.moveToAngle(servoAngle);
             lastAngle = angle;
+        }
+
+        // Try to keep wrist in position if locked
+        if (gripper_toggle.isChecked()) {
+            float wristAngle = (float) arm.getAngleForBone("middle");
+            float neededServoAngle = gripper_lock - wristAngle;
+            Servo wrist = findServo("wrist");
+            wrist.moveToAngle((double) neededServoAngle);
         }
 
 

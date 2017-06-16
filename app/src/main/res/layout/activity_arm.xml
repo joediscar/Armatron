@@ -48,13 +48,34 @@
             android:layout_weight=".9"
         />
 
-        <ImageButton
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/button_zero"
-            android:src="@android:drawable/dialog_frame"
-            android:layout_weight=".1"
-            />
+            android:orientation="vertical"
+            >
+
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/button_zero"
+                android:src="@android:drawable/dialog_frame"
+                android:text="ZERO"
+
+                />
+
+            <ToggleButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gripper Lock"
+                android:layout_weight=".1"
+                android:textOff="GRIP Unlocked"
+                android:textOn="GRIP Locked"
+                android:textSize="8dp"
+                android:id="@+id/gripper_toggle"
+                />
+
+        </LinearLayout>
     </LinearLayout>
 
 
