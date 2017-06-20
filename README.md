@@ -41,12 +41,16 @@ Once done, you can connect your phone to the IOIO via bluetooth or USB cable and
 gives you the ability to use inverse kinematics to move the arm into position, and open/close the gripper.  The 
 gestures that are recognized are:
 
-(1)  Single touch - move the arm to a new effector target
-(2)  Two Finger touch scroll up - move the wrist up
-(3)  Two Finger touch scroll down - move the wrist down
-(4)  Two fingers scroll side-to-side - rotate the base
-(5)  Two fingers pinch - close the gripper
-(6)  Two fingers spread - open the gripper
+1.  Single touch - move the arm to a new effector target
+2.  Two Finger touch scroll up - move the wrist up
+3.  Two Finger touch scroll down - move the wrist down
+4.  Two fingers scroll side-to-side - rotate the base
+5.  Two fingers pinch - close the gripper
+6.  Two fingers spread - open the gripper
+
+![Cheatsheet](http://discar.tv/share/cheatsheet.png)
+Format: ![Cheatsheet]http://discar.tv/share/cheetsheet.png
+
 
 This source includes the full source of the Caliko project's Fabrik IK library.  This differs from the original
 Caliko project in that the included version will build in a Java 1.7 Android environment.  I've been communicating
