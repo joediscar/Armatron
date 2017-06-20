@@ -49,7 +49,7 @@ gestures that are recognized are:
 6.  Two fingers spread - open the gripper
 
 ![Cheatsheet](http://discar.tv/share/cheatsheet.png)
-Format: ![Cheatsheet]http://discar.tv/share/cheetsheet.png
+
 
 
 This source includes the full source of the Caliko project's Fabrik IK library.  This differs from the original
